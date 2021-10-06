@@ -19,7 +19,7 @@ public class Main extends ListenerAdapter {
 
     public static void main(String[] args) throws LoginException, InterruptedException {
         System.out.println("Starting up bot");
-        JDA jda = JDABuilder.createDefault("ODk1MzEzODY0Mzc4NDE3MjAy.YV2wAw.Cu4NT81IhayTYfVRgaVW3tAD4aw")
+        JDA jda = JDABuilder.createDefault("[Insert Token]")
                 .setActivity(Activity.watching("the odds"))
                 .addEventListeners(new Main())
                 .build();
