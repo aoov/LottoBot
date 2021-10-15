@@ -1,25 +1,35 @@
 package edu.nyit.lottobot;
 
+import edu.nyit.lottobot.handlers.MessageHandlers;
+import edu.nyit.lottobot.managers.DataManager;
+import edu.nyit.lottobot.managers.LotteryManager;
+import edu.nyit.lottobot.managers.PaymentManager;
+
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.*;
-import net.dv8tion.jda.api.events.GenericEvent;
-import net.dv8tion.jda.api.events.ReadyEvent;
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import net.dv8tion.jda.api.events.message.guild.GuildMessageDeleteEvent;
-import net.dv8tion.jda.api.hooks.EventListener;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import org.jetbrains.annotations.NotNull;
 
 import javax.security.auth.login.LoginException;
 import java.util.Scanner;
 
 public class Main extends ListenerAdapter {
 
+    private DataManager dataManager;
+    private LotteryManager lotteryManager;
+    private PaymentManager paymentManager;
+
+    public Main(DataManager dataManager, LotteryManager lotteryManager, PaymentManager paymentManager) {
+        this.dataManager = dataManager;
+        this.lotteryManager = lotteryManager;
+        this.paymentManager = paymentManager;
+    }
+
     public static void main(String[] args) throws LoginException, InterruptedException {
-        JDA jda = JDABuilder.createDefault("")
+        Main main = new Main(new DataManager(), new LotteryManager(), new PaymentManager());
+        JDA jda = JDABuilder.createDefault("ODk1MzEzODY0Mzc4NDE3MjAy.YV2wAw.zc4n8ywGUhCQIuUAXuqOWCAL3bc")
                 .setActivity(Activity.watching("the odds"))
-                .addEventListeners(new Main())
+                .addEventListeners(new MessageHandlers(main))
                 .build();
         // optionally block until JDA is ready
         jda.awaitReady();
@@ -33,7 +43,12 @@ public class Main extends ListenerAdapter {
 
 
     }
-    //Creates bot channel if not found
+    /**
+     * Utilizes the jda object to iterate through guilds and create the bot channel if not found.
+     * Adds and saves data relating to server id and channel ids via DataManager.
+     * @see JDA
+     * @see DataManager
+     */
     public static void createChannel(JDA jda){
         //Iterates through all the servers with the bot
         for(Guild guild : jda.getGuilds()){
@@ -48,29 +63,33 @@ public class Main extends ListenerAdapter {
             if(!found){
                 guild.createTextChannel("lotto-bot");
             }
-
-
         }
     }
+    /*
+    Accessor and Mutator Methods
+     */
 
+    public DataManager getDataManager() {
+        return dataManager;
+    }
 
-    @Override
-    public void onMessageReceived(@NotNull MessageReceivedEvent event) {
-        Message msg = event.getMessage();
-        //DM Test
-        if (msg.getContentRaw().equals("!ping")) {
-            event.getAuthor().openPrivateChannel().queue(privateChannel ->
-            {
-                privateChannel.sendMessage("DM Test").queue();
-            });
-            //Ping pong
-            MessageChannel channel = event.getChannel();
-            long time = System.currentTimeMillis();
-            channel.sendMessage("Pong!") /* => RestAction<Message> */
-                    .queue(response /* => Message */ -> {
-                        response.editMessageFormat("Pong: %d ms", System.currentTimeMillis() - time).queue();
-                    });
-            super.onMessageReceived(event);
-        }
+    public void setDataManager(DataManager dataManager) {
+        this.dataManager = dataManager;
+    }
+
+    public LotteryManager getLotteryManager() {
+        return lotteryManager;
+    }
+
+    public void setLotteryManager(LotteryManager lotteryManager) {
+        this.lotteryManager = lotteryManager;
+    }
+
+    public PaymentManager getPaymentManager() {
+        return paymentManager;
+    }
+
+    public void setPaymentManager(PaymentManager paymentManager) {
+        this.paymentManager = paymentManager;
     }
 }
