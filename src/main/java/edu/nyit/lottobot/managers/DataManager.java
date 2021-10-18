@@ -15,5 +15,17 @@ public class DataManager {
         return true; //Temp Value
     }
 
+    /**
+     * Method to get the Channel ID of the designated bot channel
+     * @param guildID GuildID
+     * @return the bot channel ID from given guild ID, -1 if non-existent
+     */
+
+    public long getBotChannelID(long guildID){
+        return 4343;
+    }
+
+
+
 
 }
