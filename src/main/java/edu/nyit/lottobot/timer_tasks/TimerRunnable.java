@@ -1,6 +1,7 @@
-package edu.nyit.lottobot.handlers;
+package edu.nyit.lottobot.timer_tasks;
 
 import edu.nyit.lottobot.data_classes.Lottery;
+import edu.nyit.lottobot.data_classes.LotteryType;
 
 import java.util.TimerTask;
 
@@ -20,6 +21,7 @@ public class TimerRunnable extends TimerTask {
                 lottery.PrintLottery();
             } else {
                 lottery.setActive(false);
+                lottery.finishLottery();
                 this.cancel();
             }
         }else{
