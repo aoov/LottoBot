@@ -4,33 +4,33 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.database.*;
+import edu.nyit.lottobot.data_classes.Account;
+import edu.nyit.lottobot.data_classes.Lottery;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+
 import java.io.IOException;
 
 public class DataManager {
+    private boolean ready;
     private final FirebaseDatabase firebaseDatabase;
-    private DatabaseReference databaseReference;
-
 
     public DataManager() {
         setupFirebase();
         firebaseDatabase = FirebaseDatabase.getInstance();
-        databaseReference = firebaseDatabase.getReference("server/data");
     }
 
-    public static void setupFirebase() {
+    //Sets up and connects to the firebase database
+    public void setupFirebase() {
         FileInputStream serviceAccount = null;
         try {
-            serviceAccount = new FileInputStream("C:/Users/xrydah/IdeaProjects/LottoBot/serviceAccountKey.json");
-        } catch (FileNotFoundException e) {
+            serviceAccount = new FileInputStream("C:\\Users\\xryda\\IdeaProjects\\LottoBot\\serviceAccountKey.json");
+        } catch (Exception e) {
             e.printStackTrace();
-            return;
         }
-
         FirebaseOptions.Builder options = null;
         try {
+            assert serviceAccount != null;
             options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                     .setDatabaseUrl("https://lottobot-ee1b1-default-rtdb.firebaseio.com");
@@ -54,12 +54,14 @@ public class DataManager {
             public void onCancelled(DatabaseError error) {
             }
         });
+        ready = true;
     }
 
     /**
      * Returns whether the channel is designated for the bot.
      * Should check against database to determine if the channel is a lotto-bot channel.
-     * @param serverID Guild/Server ID in long format type.
+     *
+     * @param serverID  Guild/Server ID in long format type.
      * @param channelID Channel ID in long format type
      */
     public boolean isBotChannel(long serverID, long channelID) {
@@ -68,23 +70,36 @@ public class DataManager {
 
     /**
      * Method to get the Channel ID of the designated bot channel
+     *
      * @param guildID GuildID
      * @return the bot channel ID from given guild ID, -1 if non-existent
      */
-
-    public long getBotChannelID(long guildID){
+    public long getBotChannelID(long guildID) {
         return 4343;
     }
+
+
+    public void saveAccount(Account account) {
+        DatabaseReference accounts = firebaseDatabase.getReference("data").child("accounts");
+        accounts.child(account.getAccountID() + "").setValueAsync(account);
+    }
+
+    public void saveLottery(Lottery lottery) {
+        DatabaseReference lotteries = firebaseDatabase.getReference("data/lotteries");
+        lotteries.push().setValueAsync(lottery);
+    }
+
+    //Getter and setters
 
     public FirebaseDatabase getFirebaseDatabase() {
         return firebaseDatabase;
     }
 
-    public DatabaseReference getDatabaseReference() {
-        return databaseReference;
+    public boolean isReady() {
+        return ready;
     }
 
-    public void setDatabaseReference(DatabaseReference databaseReference) {
-        this.databaseReference = databaseReference;
+    public void setReady(boolean ready) {
+        this.ready = ready;
     }
 }
