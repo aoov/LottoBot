@@ -33,7 +33,18 @@ public class RaffleLottery extends Timed implements Game {
     private volatile User user;
     private long winner;
 
-    public RaffleLottery(JDA jda, long botChannelID, long guildID, long[] allowedRoles, long startedBy, Main main, LotteryType lotteryType) {
+    /**
+     * Default Constructor required by Firebase
+     * Values for final variables
+     *
+     * @param jda          JDA object
+     * @param botChannelID specific bot-channel
+     * @param guildID      ID of the server/guild
+     * @param allowedRoles List of allowed roles
+     * @param startedBy    Who started the lottery
+     * @param main         Instance of the Main class
+     */
+    public RaffleLottery(JDA jda, long botChannelID, long guildID, long[] allowedRoles, long startedBy, Main main) {
         this.jda = jda;
         this.botChannelID = botChannelID;
         this.guildID = guildID;
@@ -45,10 +56,20 @@ public class RaffleLottery extends Timed implements Game {
         }
         this.startedBy = startedBy;
         this.main = main;
-        this.lotteryType = lotteryType;
+        this.lotteryType = LotteryType.RAFFLE;
     }
 
-
+    /**
+     * Common constructor
+     *
+     * @param guildID      Guild/Server ID
+     * @param botChannelID Channel ID of LottoBot
+     * @param startedBy    ID of who started the Lottery
+     * @param prizePool    Prize pool
+     * @param time         Time for the lottery to run in seconds
+     * @param allowedRoles Roles allowed to join this lottery
+     * @param main         instance of Main
+     */
     public RaffleLottery(long guildID, long botChannelID, long startedBy, long prizePool, long time, @Nullable long[] allowedRoles, Main main) {
         this.jda = main.getJda();
         this.guildID = guildID;
@@ -69,6 +90,17 @@ public class RaffleLottery extends Timed implements Game {
         generateUniqueKey();
     }
 
+    /**
+     * Common constructor with ArrayList roles
+     *
+     * @param guildID      Guild/Server ID
+     * @param botChannelID Channel ID of LottoBot
+     * @param startedBy    ID of who started the Lottery
+     * @param prizePool    Prize pool
+     * @param time         Time for the lottery to run in seconds
+     * @param allowedRoles Roles allowed to join this lottery
+     * @param main         instance of Main
+     */
     public RaffleLottery(long guildID, long botChannelID, long startedBy, long prizePool, long time, @Nullable ArrayList<Long> allowedRoles, Main main) {
         this.jda = main.getJda();
         this.guildID = guildID;
@@ -86,6 +118,10 @@ public class RaffleLottery extends Timed implements Game {
         }
 
     }
+
+    /**
+     * Generates a Unique Key from Firebase and saves the lottery object under it.
+     */
     public void generateUniqueKey() {
         if (uniqueKey != null && !uniqueKey.isEmpty()) {
             System.out.println("Key already generated");
@@ -96,6 +132,17 @@ public class RaffleLottery extends Timed implements Game {
         uniqueKey = pushRef.getKey();
     }
 
+
+    /**
+     * Prints the LotteryMessage of the bot
+     *
+     * @see EmbedBuilder
+     * @see net.dv8tion.jda.api.entities.MessageEmbed
+     * @see MessageBuilder
+     * @see net.dv8tion.jda.api.interactions.components.Component
+     * @see Button
+     * @see ActionRow
+     */
     public void print() {
         if (user == null) {
             jda.retrieveUserById(startedBy).queue(usr -> {
@@ -105,6 +152,8 @@ public class RaffleLottery extends Timed implements Game {
         while (user == null) {
             Thread.onSpinWait();
         }
+        //Above code retrieves user who started if not saved. Probably redundant.
+
         EmbedBuilder embedBuilder = new EmbedBuilder()
                 .setTitle("Current Payout: **__" + prizePool + " tickets__**")
                 .setAuthor("Started by " + user.getName(), null, user.getAvatarUrl())
@@ -123,13 +172,15 @@ public class RaffleLottery extends Timed implements Game {
             sb.deleteCharAt(sb.length() - 1);
             embedBuilder.setDescription("Allowed Roles: " + sb);
         }
+        //Above code creates the Embed message see
+
         MessageBuilder mb = new MessageBuilder();
         mb.setEmbeds(embedBuilder.build());
         mb.setActionRows(ActionRow.of(
-                Button.of(ButtonStyle.SUCCESS, "enterTickets","Enter Tickets")
+                Button.of(ButtonStyle.SUCCESS, "enterTickets", "Enter Tickets")
         ));
+        //Above code creates the message to send.
 
-        //Send new message or edit
         if (messageID == 0) {
             jda.getTextChannelById(botChannelID).sendMessage(mb.build()).queue(message -> {
                 this.messageID = message.getIdLong();
@@ -137,12 +188,22 @@ public class RaffleLottery extends Timed implements Game {
         } else {
             jda.getTextChannelById(botChannelID).editMessageById(messageID, mb.build()).queue();
         }
+        //Above code either sends the first message or edits the existing message for the specific lottery
     }
 
+    /**
+     * Starts the timer for the lottery
+     *
+     * @see Timed
+     */
     public void start() {
         super.start(this);
     }
 
+    /**
+     * Finishes the lottery and calls chooseWinner
+     * Edits the message the final message and should initialize payout by PaymentManager
+     */
     public void finish() {
         chooseWinner();
         EmbedBuilder eb = new EmbedBuilder();
@@ -154,6 +215,10 @@ public class RaffleLottery extends Timed implements Game {
         jda.getTextChannelById(botChannelID).editMessageEmbedsById(messageID, eb.build()).queue();
     }
 
+    /**
+     * Chooses the winner for the lottery
+     * Places userIDs in arraylist for quantity of tickets and chooses at random.
+     */
     public void chooseWinner() {
         ArrayList<Long> participantsPool = new ArrayList<>();
         for (String l : participants.keySet()) {
@@ -167,10 +232,16 @@ public class RaffleLottery extends Timed implements Game {
         }
     }
 
+    /**
+     * Saves this RaffleLottery to the database
+     */
     public void save() {
         main.getDataManager().saveRaffle(this);
     }
 
+    /*
+    Getters and setters
+     */
     public HashMap<String, Long> getParticipants() {
         return participants;
     }
