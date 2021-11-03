@@ -1,27 +1,27 @@
 package edu.nyit.lottobot.timer_tasks;
 
-import edu.nyit.lottobot.data_classes.Lottery;
-import edu.nyit.lottobot.data_classes.LotteryType;
+import edu.nyit.lottobot.data_classes.Game;
+import edu.nyit.lottobot.data_classes.RaffleLottery;
 
 import java.util.TimerTask;
 
 public class TimerRunnable extends TimerTask {
 
-    private final Lottery lottery;
+    private final Game game;
 
-    public TimerRunnable(Lottery lottery) {
-        this.lottery = lottery;
+    public TimerRunnable(Game game) {
+        this.game = game;
     }
 
     @Override
     public void run() {
-        if (lottery.isActive()) {
-            if (lottery.getTimeLeft() > 0) {
-                lottery.setTimeLeft(lottery.getTimeLeft() - 1);
-                lottery.PrintLottery();
+        if (game.isActive()) {
+            if (game.getTimeLeft() > 0) {
+                game.setTimeLeft(game.getTimeLeft() - 1);
+                game.print();
             } else {
-                lottery.setActive(false);
-                lottery.finishLottery();
+                game.setActive(false);
+                game.finish();
                 this.cancel();
             }
         }else{
