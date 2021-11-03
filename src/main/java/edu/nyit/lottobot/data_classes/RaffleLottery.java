@@ -1,29 +1,26 @@
 package edu.nyit.lottobot.data_classes;
 
+import com.google.firebase.database.DatabaseReference;
 import edu.nyit.lottobot.Main;
-import edu.nyit.lottobot.timer_tasks.TimerRunnable;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.internal.requests.Route;
 import org.joda.time.DateTime;
 
 import javax.annotation.Nullable;
 import java.util.*;
 
-public class Lottery {
+public class RaffleLottery extends Timed implements Game {
 
+    private String uniqueKey;
     private long messageID;
-    private final String lotteryName;
     private final JDA jda;
     private final long botChannelID;
     private final long guildID;
-    private final long[] allowedRoles;
+    private ArrayList<Long> allowedRoles;
     private final long startedBy;
     private final Main main;
     private final LotteryType lotteryType;
-    private final DateTime startDate;
     private long timeLeft;
     private boolean active;
     private long prizePool;
@@ -31,23 +28,70 @@ public class Lottery {
     private volatile User user;
     private long winner;
 
-    public Lottery(long guildID, long botChannelID, long startedBy, LotteryType lotteryType, long prizePool, long time, @Nullable long[] allowedRoles, String name, Main main) {
+    public RaffleLottery(JDA jda, long botChannelID, long guildID, long[] allowedRoles, long startedBy, Main main, LotteryType lotteryType) {
+        this.jda = jda;
+        this.botChannelID = botChannelID;
+        this.guildID = guildID;
+        this.allowedRoles = new ArrayList<>();
+        if (allowedRoles != null) {
+            for (long l : allowedRoles) {
+                this.allowedRoles.add(l);
+            }
+        }
+        this.startedBy = startedBy;
+        this.main = main;
+        this.lotteryType = lotteryType;
+    }
+
+
+    public RaffleLottery(long guildID, long botChannelID, long startedBy, long prizePool, long time, @Nullable long[] allowedRoles, Main main) {
         this.jda = main.getJda();
         this.guildID = guildID;
         this.main = main;
         this.active = true;
         this.startedBy = startedBy;
-        this.lotteryType = lotteryType;
+        this.lotteryType = LotteryType.RAFFLE;
         this.prizePool = prizePool;
         this.botChannelID = botChannelID;
-        this.startDate = new DateTime();
         this.timeLeft = time;
         this.participants = new HashMap<>();
-        this.lotteryName = name;
-        this.allowedRoles = allowedRoles;
+        this.allowedRoles = new ArrayList<>();
+        if (allowedRoles != null) {
+            for (long l : allowedRoles) {
+                this.allowedRoles.add(l);
+            }
+        }
+        generateUniqueKey();
     }
 
-    public void PrintLottery() {
+    public RaffleLottery(long guildID, long botChannelID, long startedBy, long prizePool, long time, @Nullable ArrayList<Long> allowedRoles, Main main) {
+        this.jda = main.getJda();
+        this.guildID = guildID;
+        this.main = main;
+        this.active = true;
+        this.startedBy = startedBy;
+        this.lotteryType = LotteryType.RAFFLE;
+        this.prizePool = prizePool;
+        this.botChannelID = botChannelID;
+        this.timeLeft = time;
+        this.participants = new HashMap<>();
+        this.allowedRoles = new ArrayList<>();
+        if (allowedRoles != null) {
+            this.allowedRoles = allowedRoles;
+        }
+
+    }
+    public void generateUniqueKey() {
+        if (uniqueKey != null && !uniqueKey.isEmpty()) {
+            System.out.println("Key already generated");
+            return;
+        }
+        DatabaseReference lotRef = main.getDataManager().getFirebaseDatabase().getReference().child("data").child("lotteries").child("raffles");
+        DatabaseReference pushRef = lotRef.push();
+        uniqueKey = pushRef.getKey();
+    }
+
+    public void print() {
         if (user == null) {
             jda.retrieveUserById(startedBy).queue(usr -> {
                 user = usr;
@@ -59,7 +103,7 @@ public class Lottery {
         EmbedBuilder embedBuilder = new EmbedBuilder()
                 .setTitle("Current Payout: **__" + prizePool + " tickets__**")
                 .setAuthor("Started by " + user.getName(), null, user.getAvatarUrl())
-                .setFooter("Use \"/enter  " + lotteryName + "\" to enter tickets!")
+                .setFooter("ID: " + uniqueKey)
                 .addField("Time left:", timeLeft + "", true)
                 .addField("Lottery Type", lotteryType.toString(), true)
                 .setImage("https://media2.giphy.com/media/Ps8XflhsT5EVa/giphy.gif");
@@ -83,18 +127,17 @@ public class Lottery {
         }
     }
 
-    public void startTimer() {
-        Timer timer = new Timer();
-        TimerTask t = new TimerRunnable(this);
-        timer.schedule(t, 0, 1000);
+    public void start() {
+        super.start(this);
     }
 
-    public void finishLottery() {
+    public void finish() {
         chooseWinner();
         EmbedBuilder eb = new EmbedBuilder();
         eb.setTitle("**Lottery Ended! Final Payout:** __" + prizePool + " Tickets__")
                 .setAuthor("Started by " + user.getName(), null, user.getAvatarUrl())
-                .setDescription("**:partying_face: Lottery over! The winner was: <@"+ winner + "> :partying_face:**")
+                .setFooter("ID: " + uniqueKey)
+                .setDescription("**:partying_face: Lottery over! The winner was: <@" + winner + "> :partying_face:**")
                 .setImage("https://c.tenor.com/KgIC_rUjd08AAAAC/scrooge-donald-duck.gif");
         jda.getTextChannelById(botChannelID).editMessageEmbedsById(messageID, eb.build()).queue();
     }
@@ -112,30 +155,8 @@ public class Lottery {
         }
     }
 
-    public void addTickets(Long id, long tickets) {
-        if (participants.containsKey(id+"")) {
-            participants.put(id+"", participants.get(id+"") + tickets);
-        }else{
-            participants.put(id+"", tickets);
-        }
-        prizePool += tickets;
-    }
-
-    public boolean removeTickets(long id, long tickets) {
-        if (participants.containsKey(id+"") && participants.get(id+"") < tickets) {
-            return false;
-        } else {
-            participants.put(id+"", participants.get(id+"") - tickets);
-            return true;
-        }
-    }
-
-    public long getTickets(Long id) {
-        if (participants.containsKey(id+"")) {
-            return participants.get(id+"");
-        } else {
-            return 0;
-        }
+    public void save() {
+        main.getDataManager().saveRaffle(this);
     }
 
     public HashMap<String, Long> getParticipants() {
@@ -170,10 +191,6 @@ public class Lottery {
         return lotteryType;
     }
 
-    public DateTime getStartDate() {
-        return startDate;
-    }
-
     public long getTimeLeft() {
         return timeLeft;
     }
@@ -198,4 +215,31 @@ public class Lottery {
         this.prizePool = prizePool;
     }
 
+    public String getUniqueKey() {
+        return uniqueKey;
+    }
+
+    public ArrayList<Long> getAllowedRoles() {
+        return allowedRoles;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public long getWinner() {
+        return winner;
+    }
+
+    public void setUniqueKey(String uniqueKey) {
+        this.uniqueKey = uniqueKey;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public void setWinner(long winner) {
+        this.winner = winner;
+    }
 }
