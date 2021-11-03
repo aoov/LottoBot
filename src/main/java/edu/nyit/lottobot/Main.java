@@ -48,36 +48,18 @@ public class Main extends ListenerAdapter {
                 .setActivity(Activity.watching("the odds"))
                 .build();
         jda.awaitReady();
-        Main main = new Main(jda);
-        jda.addEventListener(new ButtonListeners(main));
-        // main.getMessageHandler().replySelfDestructMessage(117648536350359555L, 895385625270829077L, 5, "not a command");
-        while (!main.getDataManager().isReady()) {
+        //Above code creates the JDA Object for interface with discord, bot key should go in createDefault("") to authenticate the bot
+        Main main = new Main(jda); //Create the main instance to connect the various classes
+        jda.addEventListener(new ButtonListeners(main)); //Adds a button listener for future button events
+        while (!main.getDataManager().isReady()) { //Spaghetti code to wait for the asynch database to be ready
 
         }
         System.out.println("Firebase ready");
-        for(RaffleLottery raffleLottery : main.getDataManager().getRaffleLotteries().values()){
+        //Testing raffle print by using lottery loaded from database
+        for (RaffleLottery raffleLottery : main.getDataManager().getRaffleLotteries().values()) {
             raffleLottery.print();
         }
     }
-    /*
-    public void main(String[] args) throws LoginException, InterruptedException {
-        Main main = new Main(new DataManager(), new LotteryManager(), new PaymentManager());
-        JDA jda = JDABuilder.createDefault("ODk1MzEzODY0Mzc4NDE3MjAy.YV2wAw.zc4n8ywGUhCQIuUAXuqOWCAL3bc")
-                .setActivity(Activity.watching("the odds"))
-                .addEventListeners(new MessageHandlers(main))
-                .build();
-        // optionally block until JDA is ready
-        jda.awaitReady();
-        createChannel(jda);
-        String input = "";
-        Scanner inputScanner = new Scanner(System.in);
-        while(!input.equalsIgnoreCase("exit")){
-            input = inputScanner.next();
-        }
-        jda.shutdown();
-    }
-    */
-
 
     /**
      * Utilizes the jda object to iterate through guilds and create the bot channel if not found.
@@ -102,10 +84,10 @@ public class Main extends ListenerAdapter {
             }
         }
     }
+
     /*
     Accessor and Mutator Methods
      */
-
     public DataManager getDataManager() {
         return dataManager;
     }

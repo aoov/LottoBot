@@ -6,7 +6,6 @@ import com.google.firebase.FirebaseOptions;
 import com.google.firebase.database.*;
 import edu.nyit.lottobot.Main;
 import edu.nyit.lottobot.data_classes.Account;
-import edu.nyit.lottobot.data_classes.LotteryType;
 import edu.nyit.lottobot.data_classes.RaffleLottery;
 
 import java.io.FileInputStream;
@@ -34,7 +33,7 @@ public class DataManager {
         updateLocalRaffles(); //Load raffles from database
     }
 
-    //Sets up and connects to the firebase database
+    //Sets up and connects to the firebase database.
     public void setupFirebase() {
         FileInputStream serviceAccount = null;
         try {
@@ -92,22 +91,40 @@ public class DataManager {
         return 4343;
     }
 
+    /**
+     * Method to save an account object to the database
+     *
+     * @param account Account object to save
+     */
     public void saveAccount(Account account) {
         DatabaseReference accounts = firebaseDatabase.getReference("data").child("accounts");
         accounts.child(account.getAccountID() + "").setValueAsync(account);
     }
 
+    /**
+     * Saves all local account objects to the database
+     */
     public void saveAllAccounts() {
         for (Account account : accounts.values()) {
             saveAccount(account);
         }
     }
 
-    public void saveRaffle(RaffleLottery game) {
+    /**
+     * Method to a RaffleLottery object to the database
+     *
+     * @param raffleLottery RaffleLottery object to save
+     */
+    public void saveRaffle(RaffleLottery raffleLottery) {
         DatabaseReference lotteries = firebaseDatabase.getReference("data/lotteries/raffles");
-        lotteries.child(game.getUniqueKey()).setValueAsync(game);
+        lotteries.child(raffleLottery.getUniqueKey()).setValueAsync(raffleLottery);
     }
 
+    /**
+     * Updates local RaffleLottery object list from database
+     *
+     * @return boolean value when complete
+     */
     public boolean updateLocalRaffles() {
         this.raffleLotteryReference = firebaseDatabase.getReference("data/lotteries/raffles");
         CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -152,6 +169,11 @@ public class DataManager {
         return true;
     }
 
+    /**
+     * Updates local Account list from database
+     *
+     * @return boolean value upon completion
+     */
     public boolean updateLocalAccounts() {
         accountReference = firebaseDatabase.getReference("data").child("accounts");
         CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -180,29 +202,53 @@ public class DataManager {
         return true;
     }
 
-    public RaffleLottery getRaffleLottery(String raffleID){
-        if(raffleLotteries.containsKey(raffleID)){
+    /**
+     * Method to get RaffleLottery from raffleID (Unique Key)
+     *
+     * Checks locally then updates to check from database
+     *
+     * @param raffleID Unique key of the RaffleLottery object
+     * @return RaffleLottery object, null if nonexistent
+     */
+    public RaffleLottery getRaffleLottery(String raffleID) {
+        if (raffleLotteries.containsKey(raffleID)) {
             return raffleLotteries.get(raffleID);
         }
         updateLocalRaffles();
         return raffleLotteries.getOrDefault(raffleID, null);
     }
 
-    public RaffleLottery getRaffleLottery(Long messageID){
-        for(RaffleLottery raffleLottery : raffleLotteries.values()){
-            if(raffleLottery.getMessageID() == messageID){
+    /**
+     * Method to get RaffleLottery from message id (Unique message ID)
+     *
+     * Checks locally then updates to check from database
+     *
+     * @param messageID Unique messageID of the RaffleLottery object
+     * @return RaffleLottery object, null if nonexistent
+     */
+    public RaffleLottery getRaffleLottery(Long messageID) {
+        for (RaffleLottery raffleLottery : raffleLotteries.values()) {
+            if (raffleLottery.getMessageID() == messageID) {
                 return raffleLottery;
             }
         }
         updateLocalRaffles();
-        for(RaffleLottery raffleLottery : raffleLotteries.values()){
-            if(raffleLottery.getMessageID() == messageID){
+        for (RaffleLottery raffleLottery : raffleLotteries.values()) {
+            if (raffleLottery.getMessageID() == messageID) {
                 return raffleLottery;
             }
         }
         return null;
     }
 
+    /**
+     * Method to retrieve the account of specific userID
+     * <p>
+     * Checks locally then updates to check from database
+     *
+     * @param userID ID of desired User
+     * @return Account object of user, null if nonexistent
+     */
     public Account getAccount(long userID) {
         if (accounts.containsKey(userID)) {
             return accounts.get(userID);
@@ -211,7 +257,9 @@ public class DataManager {
         return accounts.getOrDefault(userID, null);
     }
 
-    //Getter and setters
+    /*
+    Getters and Setters
+     */
     public FirebaseDatabase getFirebaseDatabase() {
         return firebaseDatabase;
     }
