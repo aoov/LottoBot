@@ -4,7 +4,12 @@ import com.google.firebase.database.DatabaseReference;
 import edu.nyit.lottobot.Main;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.MessageBuilder;
+import net.dv8tion.jda.api.entities.Emoji;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.interactions.components.ActionRow;
+import net.dv8tion.jda.api.interactions.components.Button;
+import net.dv8tion.jda.api.interactions.components.ButtonStyle;
 import org.joda.time.DateTime;
 
 import javax.annotation.Nullable;
@@ -118,12 +123,19 @@ public class RaffleLottery extends Timed implements Game {
             sb.deleteCharAt(sb.length() - 1);
             embedBuilder.setDescription("Allowed Roles: " + sb);
         }
+        MessageBuilder mb = new MessageBuilder();
+        mb.setEmbeds(embedBuilder.build());
+        mb.setActionRows(ActionRow.of(
+                Button.of(ButtonStyle.SUCCESS, "enterTickets","Enter Tickets")
+        ));
+
+        //Send new message or edit
         if (messageID == 0) {
-            jda.getTextChannelById(botChannelID).sendMessageEmbeds(embedBuilder.build()).queue(message -> {
+            jda.getTextChannelById(botChannelID).sendMessage(mb.build()).queue(message -> {
                 this.messageID = message.getIdLong();
             });
         } else {
-            jda.getTextChannelById(botChannelID).editMessageEmbedsById(messageID, embedBuilder.build()).queue();
+            jda.getTextChannelById(botChannelID).editMessageById(messageID, mb.build()).queue();
         }
     }
 
