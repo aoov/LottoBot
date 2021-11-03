@@ -7,6 +7,7 @@ import com.google.firebase.database.ValueEventListener;
 import edu.nyit.lottobot.data_classes.Account;
 import edu.nyit.lottobot.data_classes.RaffleLottery;
 import edu.nyit.lottobot.data_classes.LotteryType;
+import edu.nyit.lottobot.handlers.ButtonListeners;
 import edu.nyit.lottobot.handlers.MessageHandlers;
 import edu.nyit.lottobot.managers.DataManager;
 import edu.nyit.lottobot.managers.LotteryManager;
@@ -48,15 +49,15 @@ public class Main extends ListenerAdapter {
                 .build();
         jda.awaitReady();
         Main main = new Main(jda);
+        jda.addEventListener(new ButtonListeners(main));
         // main.getMessageHandler().replySelfDestructMessage(117648536350359555L, 895385625270829077L, 5, "not a command");
         while (!main.getDataManager().isReady()) {
 
         }
         System.out.println("Firebase ready");
-        //RaffleLottery l = new RaffleLottery(895321750932447263L, 899675807490932817L, 117648536350359555L,
-          //      50, 10, new long[]{902247302989770792L}, main);
-        //l.getParticipants().put("117648536350359555L", 30L);
-        //l.save();
+        for(RaffleLottery raffleLottery : main.getDataManager().getRaffleLotteries().values()){
+            raffleLottery.print();
+        }
     }
     /*
     public void main(String[] args) throws LoginException, InterruptedException {
