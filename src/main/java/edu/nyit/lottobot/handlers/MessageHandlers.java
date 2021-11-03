@@ -18,6 +18,7 @@ public class MessageHandlers extends ListenerAdapter {
         this.main = main;
     }
 
+    // No use
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
         //Determines if message is in the proper channel.
@@ -26,6 +27,14 @@ public class MessageHandlers extends ListenerAdapter {
         }
     }
 
+    /**
+     * Sends a message that pings the user and also deletes itself.
+     *
+     * @param userID User to ping
+     * @param channelID Channel to send the message in
+     * @param time Time in seconds until message deletion
+     * @param message Actual message to send
+     */
     public void pingSelfDestructMessage(long userID, long channelID, long time, String message){
         Timer t = new Timer();
         var wrapper = new Object() {

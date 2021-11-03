@@ -5,6 +5,9 @@ import edu.nyit.lottobot.timer_tasks.TimerRunnable;
 import java.util.Timer;
 import java.util.TimerTask;
 
+/**
+ * Abstract class for games to inherit a timer easily.
+ */
 public abstract class Timed {
         private long timeLeft;
 

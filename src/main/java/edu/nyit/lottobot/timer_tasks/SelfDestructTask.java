@@ -5,6 +5,9 @@ import net.dv8tion.jda.api.JDA;
 
 import java.util.TimerTask;
 
+/**
+ * Class used to track time for a message that deletes itself.
+ */
 public class SelfDestructTask extends TimerTask {
     private long time;
     private final long channelID;

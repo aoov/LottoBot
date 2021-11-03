@@ -5,6 +5,10 @@ import edu.nyit.lottobot.data_classes.RaffleLottery;
 
 import java.util.TimerTask;
 
+
+/**
+ * Class used to run a timer for games.
+ */
 public class TimerRunnable extends TimerTask {
 
     private final Game game;

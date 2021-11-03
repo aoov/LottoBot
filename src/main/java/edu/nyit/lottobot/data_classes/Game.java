@@ -1,4 +1,8 @@
 package edu.nyit.lottobot.data_classes;
+
+/**
+ * Interface to require future games have these methods
+ */
 public interface Game {
     
     void print();
