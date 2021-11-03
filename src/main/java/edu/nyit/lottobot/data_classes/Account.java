@@ -4,6 +4,11 @@ public class Account {
     private final long accountID;
     private long balance;
 
+    public Account(){
+        accountID = -1;
+        balance = 0;
+    }
+
     public Account(long accountID, long balance) {
         this.accountID = accountID;
         this.balance = balance;
