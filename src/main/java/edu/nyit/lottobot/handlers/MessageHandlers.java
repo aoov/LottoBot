@@ -26,14 +26,15 @@ public class MessageHandlers extends ListenerAdapter {
         }
     }
 
-    public void replySelfDestructMessage(long userID, long channelID, long time, String message) throws InterruptedException {
+    public void pingSelfDestructMessage(long userID, long channelID, long time, String message){
         Timer t = new Timer();
-        var wrapper = new Object(){TimerTask task;};
+        var wrapper = new Object() {
+            TimerTask task;
+        };
         main.getJda().getTextChannelById(channelID).sendMessage("<@" + userID + ">" + ": " + message).queue(sentMessage -> {
             wrapper.task = new SelfDestructTask(time, channelID, sentMessage.getIdLong(), main.getJda());
             t.schedule(wrapper.task, 0, 1000);
         });
-
     }
 }
 
