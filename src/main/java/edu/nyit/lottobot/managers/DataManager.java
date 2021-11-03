@@ -223,4 +223,20 @@ public class DataManager {
     public void setReady(boolean ready) {
         this.ready = ready;
     }
+
+    public HashMap<Long, Account> getAccounts() {
+        return accounts;
+    }
+
+    public HashMap<String, RaffleLottery> getRaffleLotteries() {
+        return raffleLotteries;
+    }
+
+    public DatabaseReference getAccountReference() {
+        return accountReference;
+    }
+
+    public DatabaseReference getRaffleLotteryReference() {
+        return raffleLotteryReference;
+    }
 }
