@@ -1,11 +1,11 @@
 package edu.nyit.lottobot;
 
-import com.google.auth.oauth2.GoogleCredentials;
-import com.google.firebase.FirebaseApp;
-import com.google.firebase.FirebaseOptions;
-import com.google.firebase.database.*;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.ValueEventListener;
 import edu.nyit.lottobot.data_classes.Account;
-import edu.nyit.lottobot.data_classes.Lottery;
+import edu.nyit.lottobot.data_classes.RaffleLottery;
 import edu.nyit.lottobot.data_classes.LotteryType;
 import edu.nyit.lottobot.handlers.MessageHandlers;
 import edu.nyit.lottobot.managers.DataManager;
@@ -20,11 +20,9 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 
 import javax.security.auth.login.LoginException;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 
 public class Main extends ListenerAdapter {
@@ -36,11 +34,11 @@ public class Main extends ListenerAdapter {
     private MessageHandlers messageHandler;
 
     public Main(JDA jda) {
-        dataManager = new DataManager();
+        this.jda = jda;
+        dataManager = new DataManager(this);
         lotteryManager = new LotteryManager();
         paymentManager = new PaymentManager();
         messageHandler = new MessageHandlers(this);
-        this.jda = jda;
     }
 
 
@@ -50,20 +48,15 @@ public class Main extends ListenerAdapter {
                 .build();
         jda.awaitReady();
         Main main = new Main(jda);
-        Lottery l = new Lottery(895321750932447263L, 899675807490932817L, 117648536350359555L, LotteryType.RAFFLE,
-                50, 10, null, "Test Lottery",main);
-        l.addTickets(117648536350359555L, 300);
-        l.PrintLottery();
-        l.startTimer();
         // main.getMessageHandler().replySelfDestructMessage(117648536350359555L, 895385625270829077L, 5, "not a command");
         while (!main.getDataManager().isReady()) {
 
         }
         System.out.println("Firebase ready");
-        main.getDataManager().saveLottery(l);
-
-
-
+        //RaffleLottery l = new RaffleLottery(895321750932447263L, 899675807490932817L, 117648536350359555L,
+          //      50, 10, new long[]{902247302989770792L}, main);
+        //l.getParticipants().put("117648536350359555L", 30L);
+        //l.save();
     }
     /*
     public void main(String[] args) throws LoginException, InterruptedException {
@@ -151,4 +144,6 @@ public class Main extends ListenerAdapter {
     public void setMessageHandler(MessageHandlers messageHandler) {
         this.messageHandler = messageHandler;
     }
+
+
 }
