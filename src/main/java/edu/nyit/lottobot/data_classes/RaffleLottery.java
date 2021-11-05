@@ -70,7 +70,7 @@ public class RaffleLottery extends Timed implements Game {
      * @param allowedRoles Roles allowed to join this lottery
      * @param main         instance of Main
      */
-    public RaffleLottery(long guildID, long botChannelID, long startedBy, long prizePool, long time, @Nullable long[] allowedRoles, Main main) {
+    public RaffleLottery(long guildID, long botChannelID, long startedBy, long prizePool, long time, @Nullable long[] allowedRoles, Main main, boolean generateKey) {
         this.jda = main.getJda();
         this.guildID = guildID;
         this.main = main;
@@ -87,7 +87,9 @@ public class RaffleLottery extends Timed implements Game {
                 this.allowedRoles.add(l);
             }
         }
-        generateUniqueKey();
+        if(generateKey){
+            generateUniqueKey();
+        }
     }
 
     /**
@@ -101,7 +103,7 @@ public class RaffleLottery extends Timed implements Game {
      * @param allowedRoles Roles allowed to join this lottery
      * @param main         instance of Main
      */
-    public RaffleLottery(long guildID, long botChannelID, long startedBy, long prizePool, long time, @Nullable ArrayList<Long> allowedRoles, Main main) {
+    public RaffleLottery(long guildID, long botChannelID, long startedBy, long prizePool, long time, @Nullable ArrayList<Long> allowedRoles, Main main, boolean generateKey) {
         this.jda = main.getJda();
         this.guildID = guildID;
         this.main = main;
@@ -116,7 +118,9 @@ public class RaffleLottery extends Timed implements Game {
         if (allowedRoles != null) {
             this.allowedRoles = allowedRoles;
         }
-
+        if(generateKey){
+            generateUniqueKey();
+        }
     }
 
     /**
@@ -161,7 +165,7 @@ public class RaffleLottery extends Timed implements Game {
                 .addField("Time left:", timeLeft + "", true)
                 .addField("Lottery Type", lotteryType.toString(), true)
                 .setImage("https://media2.giphy.com/media/Ps8XflhsT5EVa/giphy.gif");
-        if (allowedRoles == null) {
+        if (allowedRoles == null || allowedRoles.isEmpty()) {
             embedBuilder.setDescription("Allowed Roles: @everyone");
         } else {
             StringBuilder sb = new StringBuilder();
@@ -306,20 +310,12 @@ public class RaffleLottery extends Timed implements Game {
         return allowedRoles;
     }
 
-    public User getUser() {
-        return user;
-    }
-
     public long getWinner() {
         return winner;
     }
 
     public void setUniqueKey(String uniqueKey) {
         this.uniqueKey = uniqueKey;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
     }
 
     public void setWinner(long winner) {

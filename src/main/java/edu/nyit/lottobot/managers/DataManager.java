@@ -143,7 +143,7 @@ public class DataManager {
                     long timeLeft = dataSnapshot.child("timeLeft").getValue(Long.class);
                     String uniqueKey = dataSnapshot.child("uniqueKey").getValue(String.class);
                     long winner = dataSnapshot.child("winner").getValue(Long.class);
-                    RaffleLottery raffleLottery = new RaffleLottery(guildID, botChannelID, startedBy, prizePool, timeLeft, allowedRoles, main);
+                    RaffleLottery raffleLottery = new RaffleLottery(guildID, botChannelID, startedBy, prizePool, timeLeft, allowedRoles, main, false);
                     if (!participants.isEmpty()) {
                         raffleLottery.setParticipants(participants);
                     }

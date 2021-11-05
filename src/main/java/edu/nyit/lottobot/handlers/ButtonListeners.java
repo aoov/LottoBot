@@ -15,7 +15,6 @@ public class ButtonListeners extends ListenerAdapter {
     @Override
     public void onButtonClick(@NotNull ButtonClickEvent event) {
         if (event.getComponentId().equals("enterTickets")) {
-
             event.reply("test").setEphemeral(true).queue();
 
         }
