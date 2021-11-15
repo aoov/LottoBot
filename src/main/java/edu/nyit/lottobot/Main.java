@@ -9,6 +9,7 @@ import edu.nyit.lottobot.data_classes.RaffleLottery;
 import edu.nyit.lottobot.data_classes.LotteryType;
 import edu.nyit.lottobot.handlers.ButtonListeners;
 import edu.nyit.lottobot.handlers.MessageHandlers;
+import edu.nyit.lottobot.handlers.SlashCommandListeners;
 import edu.nyit.lottobot.managers.DataManager;
 import edu.nyit.lottobot.managers.LotteryManager;
 import edu.nyit.lottobot.managers.PaymentManager;
@@ -18,12 +19,11 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.commands.build.CommandData;
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 
 
 import javax.security.auth.login.LoginException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 
 public class Main extends ListenerAdapter {
@@ -37,7 +37,7 @@ public class Main extends ListenerAdapter {
     public Main(JDA jda) {
         this.jda = jda;
         dataManager = new DataManager(this);
-        lotteryManager = new LotteryManager();
+            lotteryManager = new LotteryManager(this);
         paymentManager = new PaymentManager();
         messageHandler = new MessageHandlers(this);
     }
@@ -48,17 +48,25 @@ public class Main extends ListenerAdapter {
                 .setActivity(Activity.watching("the odds"))
                 .build();
         jda.awaitReady();
+        jda.updateCommands().queue();
         //Above code creates the JDA Object for interface with discord, bot key should go in createDefault("") to authenticate the bot
         Main main = new Main(jda); //Create the main instance to connect the various classes
         jda.addEventListener(new ButtonListeners(main)); //Adds a button listener for future button events
+        jda.addEventListener(new SlashCommandListeners(main));
+        createCommands(jda);
         while (!main.getDataManager().isReady()) { //Spaghetti code to wait for the asynch database to be ready
 
         }
         System.out.println("Firebase ready");
-        //Testing raffle print by using lottery loaded from database
-        for (RaffleLottery raffleLottery : main.getDataManager().getRaffleLotteries().values()) {
-            raffleLottery.print();
-        }
+    }
+
+    public static void createCommands(JDA jda) {
+        CommandData commandData = new CommandData("lottobot", "Base LottoBot Commands");
+        commandData.addSubcommands(new SubcommandData("create", "Create LottoBot game"));
+        commandData.addSubcommands(new SubcommandData("help", "Get bot help"));
+        jda.getGuildById(906018488592769086L).upsertCommand(commandData).queue();
+        jda.getGuildById(895321750932447263L).upsertCommand(commandData).queue();
+        System.out.println("Created commands");
     }
 
     /**
