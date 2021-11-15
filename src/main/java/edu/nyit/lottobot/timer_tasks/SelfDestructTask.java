@@ -25,10 +25,8 @@ public class SelfDestructTask extends TimerTask {
     @Override
     public void run() {
         if (time > 0) {
-            System.out.println(time);
             time--;
         } else {
-            System.out.println(messageID);
             jda.getTextChannelById(channelID).retrieveMessageById(messageID).queue(retrieved -> {
                 retrieved.delete().queue();
                 this.cancel();
