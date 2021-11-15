@@ -29,8 +29,8 @@ public class DataManager {
         raffleLotteries = new HashMap<>();
         this.main = main;
         firebaseDatabase = FirebaseDatabase.getInstance();
-        updateLocalAccounts(); //Load raffles from database
-        updateLocalRaffles(); //Load raffles from database
+      //  updateLocalAccounts(); //Load raffles from database
+     //   updateLocalRaffles(); //Load raffles from database
     }
 
     //Sets up and connects to the firebase database.
@@ -111,11 +111,11 @@ public class DataManager {
     }
 
     /**
-     * Method to a RaffleLottery object to the database
+     * Method to a save RaffleLottery object to the database
      *
      * @param raffleLottery RaffleLottery object to save
      */
-    public void saveRaffle(RaffleLottery raffleLottery) {
+    public void saveRaffleToDatabase(RaffleLottery raffleLottery) {
         DatabaseReference lotteries = firebaseDatabase.getReference("data/lotteries/raffles");
         lotteries.child(raffleLottery.getUniqueKey()).setValueAsync(raffleLottery);
     }
