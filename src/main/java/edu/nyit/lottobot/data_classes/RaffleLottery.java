@@ -5,12 +5,10 @@ import edu.nyit.lottobot.Main;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.MessageBuilder;
-import net.dv8tion.jda.api.entities.Emoji;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.Button;
 import net.dv8tion.jda.api.interactions.components.ButtonStyle;
-import org.joda.time.DateTime;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -240,7 +238,7 @@ public class RaffleLottery extends Timed implements Game {
      * Saves this RaffleLottery to the database
      */
     public void save() {
-        main.getDataManager().saveRaffle(this);
+        main.getDataManager().saveRaffleToDatabase(this);
     }
 
     /*
