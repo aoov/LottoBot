@@ -7,7 +7,9 @@ import com.google.firebase.database.ValueEventListener;
 import edu.nyit.lottobot.data_classes.Account;
 import edu.nyit.lottobot.data_classes.RaffleLottery;
 import edu.nyit.lottobot.data_classes.LotteryType;
+import edu.nyit.lottobot.handlers.ButtonListeners;
 import edu.nyit.lottobot.handlers.MessageHandlers;
+import edu.nyit.lottobot.handlers.SlashCommandListeners;
 import edu.nyit.lottobot.managers.DataManager;
 import edu.nyit.lottobot.managers.LotteryManager;
 import edu.nyit.lottobot.managers.PaymentManager;
@@ -17,12 +19,12 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.commands.build.CommandData;
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 
 
 import javax.security.auth.login.LoginException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.Scanner;
 
 
 public class Main extends ListenerAdapter {
@@ -36,7 +38,7 @@ public class Main extends ListenerAdapter {
     public Main(JDA jda) {
         this.jda = jda;
         dataManager = new DataManager(this);
-        lotteryManager = new LotteryManager();
+            lotteryManager = new LotteryManager(this);
         paymentManager = new PaymentManager();
         messageHandler = new MessageHandlers(this);
     }
@@ -47,36 +49,36 @@ public class Main extends ListenerAdapter {
                 .setActivity(Activity.watching("the odds"))
                 .build();
         jda.awaitReady();
-        Main main = new Main(jda);
-        // main.getMessageHandler().replySelfDestructMessage(117648536350359555L, 895385625270829077L, 5, "not a command");
-        while (!main.getDataManager().isReady()) {
+        jda.updateCommands().queue();
+        //Above code creates the JDA Object for interface with discord, bot key should go in createDefault("") to authenticate the bot
+        Main main = new Main(jda); //Create the main instance to connect the various classes
+        jda.addEventListener(new ButtonListeners(main)); //Adds a button listener for future button events
+        jda.addEventListener(new SlashCommandListeners(main));
+        jda.addEventListener(new MessageHandlers(main));
+        createCommands(jda);
+        while (!main.getDataManager().isReady()) { //Spaghetti code to wait for the asynch database to be ready
 
         }
         System.out.println("Firebase ready");
-        //RaffleLottery l = new RaffleLottery(895321750932447263L, 899675807490932817L, 117648536350359555L,
-          //      50, 10, new long[]{902247302989770792L}, main);
-        //l.getParticipants().put("117648536350359555L", 30L);
-        //l.save();
-    }
-    /*
-    public void main(String[] args) throws LoginException, InterruptedException {
-        Main main = new Main(new DataManager(), new LotteryManager(), new PaymentManager());
-        JDA jda = JDABuilder.createDefault("ODk1MzEzODY0Mzc4NDE3MjAy.YV2wAw.zc4n8ywGUhCQIuUAXuqOWCAL3bc")
-                .setActivity(Activity.watching("the odds"))
-                .addEventListeners(new MessageHandlers(main))
-                .build();
-        // optionally block until JDA is ready
-        jda.awaitReady();
-        createChannel(jda);
-        String input = "";
-        Scanner inputScanner = new Scanner(System.in);
+        Scanner scanner = new Scanner(System.in);
+        String input = scanner.nextLine();
         while(!input.equalsIgnoreCase("exit")){
-            input = inputScanner.next();
+            input = scanner.nextLine();
         }
+        main.getDataManager().saveAllAccounts();
+        main.getDataManager().saveAllRafflesToDatabase();
         jda.shutdown();
     }
-    */
 
+    public static void createCommands(JDA jda) {
+        CommandData commandData = new CommandData("lottobot", "Base LottoBot Commands");
+        commandData.addSubcommands(new SubcommandData("create", "Create LottoBot game"));
+        commandData.addSubcommands(new SubcommandData("help", "Get bot help"));
+        commandData.addSubcommands(new SubcommandData("balance", "Get account balance"));
+        commandData.addSubcommands(new SubcommandData("daily", "Get Daily Tickets"));
+        jda.getGuildById(895321750932447263L).upsertCommand(commandData).queue();
+        System.out.println("Created commands");
+    }
 
     /**
      * Utilizes the jda object to iterate through guilds and create the bot channel if not found.
@@ -101,10 +103,10 @@ public class Main extends ListenerAdapter {
             }
         }
     }
+
     /*
     Accessor and Mutator Methods
      */
-
     public DataManager getDataManager() {
         return dataManager;
     }

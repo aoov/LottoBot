@@ -5,6 +5,9 @@ import net.dv8tion.jda.api.JDA;
 
 import java.util.TimerTask;
 
+/**
+ * Class used to track time for a message that deletes itself.
+ */
 public class SelfDestructTask extends TimerTask {
     private long time;
     private final long channelID;
@@ -22,10 +25,8 @@ public class SelfDestructTask extends TimerTask {
     @Override
     public void run() {
         if (time > 0) {
-            System.out.println(time);
             time--;
         } else {
-            System.out.println(messageID);
             jda.getTextChannelById(channelID).retrieveMessageById(messageID).queue(retrieved -> {
                 retrieved.delete().queue();
                 this.cancel();

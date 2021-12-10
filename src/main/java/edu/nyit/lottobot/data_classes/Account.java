@@ -25,4 +25,16 @@ public class Account {
     public void setBalance(long balance) {
         this.balance = balance;
     }
+
+    public void addBalance(long balance){
+        this.balance += balance;
+    }
+
+    @Override
+    public String toString() {
+        return "Account{" +
+                "accountID=" + accountID +
+                ", balance=" + balance +
+                '}';
+    }
 }
