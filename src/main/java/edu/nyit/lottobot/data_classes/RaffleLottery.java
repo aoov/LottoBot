@@ -30,6 +30,7 @@ public class RaffleLottery extends Timed implements Game {
     private HashMap<String, Long> participants;
     private volatile User user;
     private long winner;
+    private Timer t;
 
     /**
      * Default Constructor required by Firebase
@@ -55,6 +56,7 @@ public class RaffleLottery extends Timed implements Game {
         this.startedBy = startedBy;
         this.main = main;
         this.lotteryType = LotteryType.RAFFLE;
+        this.t = new Timer();
     }
 
     /**
@@ -80,6 +82,7 @@ public class RaffleLottery extends Timed implements Game {
         this.timeLeft = time;
         this.participants = new HashMap<>();
         this.allowedRoles = new ArrayList<>();
+        this.t = new Timer();
         if (allowedRoles != null) {
             for (long l : allowedRoles) {
                 this.allowedRoles.add(l);
@@ -116,6 +119,7 @@ public class RaffleLottery extends Timed implements Game {
         if (allowedRoles != null) {
             this.allowedRoles = allowedRoles;
         }
+        this.t = new Timer();
         if(generateKey){
             generateUniqueKey();
         }
@@ -132,6 +136,7 @@ public class RaffleLottery extends Timed implements Game {
         DatabaseReference lotRef = main.getDataManager().getFirebaseDatabase().getReference().child("data").child("lotteries").child("raffles");
         DatabaseReference pushRef = lotRef.push();
         uniqueKey = pushRef.getKey();
+        main.getDataManager().saveRaffleToDatabase(this);
     }
 
 
@@ -199,7 +204,10 @@ public class RaffleLottery extends Timed implements Game {
      * @see Timed
      */
     public void start() {
-        super.start(this);
+        this.t = super.start(this, t);
+    }
+    public void stop(){
+        super.stop(t);
     }
 
     /**
@@ -208,13 +216,15 @@ public class RaffleLottery extends Timed implements Game {
      */
     public void finish() {
         chooseWinner();
+        MessageBuilder mb = new MessageBuilder();
         EmbedBuilder eb = new EmbedBuilder();
         eb.setTitle("**Lottery Ended! Final Payout:** __" + prizePool + " Tickets__")
                 .setAuthor("Started by " + user.getName(), null, user.getAvatarUrl())
                 .setFooter("ID: " + uniqueKey)
                 .setDescription("**:partying_face: Lottery over! The winner was: <@" + winner + "> :partying_face:**")
                 .setImage("https://c.tenor.com/KgIC_rUjd08AAAAC/scrooge-donald-duck.gif");
-        jda.getTextChannelById(botChannelID).editMessageEmbedsById(messageID, eb.build()).queue();
+        mb.setEmbeds(eb.build());
+        jda.getTextChannelById(botChannelID).editMessageById(messageID, mb.build()).queue();
     }
 
     /**
@@ -232,6 +242,18 @@ public class RaffleLottery extends Timed implements Game {
             int chosen = random.nextInt(participantsPool.size());
             winner = participantsPool.get(chosen);
         }
+    }
+
+    @Override
+    public void addParticipant(long user, Object object) {
+        long amount = (Long) object;
+        if(participants.containsKey(user)){
+            participants.put(user+"", participants.get(user) + amount);
+        }else{
+            participants.put(user + "", amount);
+        }
+        main.getDataManager().getAccount(user).setBalance(main.getDataManager().getAccount(user).getBalance()-amount);
+        prizePool += amount;
     }
 
     /**
