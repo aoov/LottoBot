@@ -24,6 +24,7 @@ import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 
 
 import javax.security.auth.login.LoginException;
+import java.util.Scanner;
 
 
 public class Main extends ListenerAdapter {
@@ -53,18 +54,28 @@ public class Main extends ListenerAdapter {
         Main main = new Main(jda); //Create the main instance to connect the various classes
         jda.addEventListener(new ButtonListeners(main)); //Adds a button listener for future button events
         jda.addEventListener(new SlashCommandListeners(main));
+        jda.addEventListener(new MessageHandlers(main));
         createCommands(jda);
         while (!main.getDataManager().isReady()) { //Spaghetti code to wait for the asynch database to be ready
 
         }
         System.out.println("Firebase ready");
+        Scanner scanner = new Scanner(System.in);
+        String input = scanner.nextLine();
+        while(!input.equalsIgnoreCase("exit")){
+            input = scanner.nextLine();
+        }
+        main.getDataManager().saveAllAccounts();
+        main.getDataManager().saveAllRafflesToDatabase();
+        jda.shutdown();
     }
 
     public static void createCommands(JDA jda) {
         CommandData commandData = new CommandData("lottobot", "Base LottoBot Commands");
         commandData.addSubcommands(new SubcommandData("create", "Create LottoBot game"));
         commandData.addSubcommands(new SubcommandData("help", "Get bot help"));
-        jda.getGuildById(906018488592769086L).upsertCommand(commandData).queue();
+        commandData.addSubcommands(new SubcommandData("balance", "Get account balance"));
+        commandData.addSubcommands(new SubcommandData("daily", "Get Daily Tickets"));
         jda.getGuildById(895321750932447263L).upsertCommand(commandData).queue();
         System.out.println("Created commands");
     }
