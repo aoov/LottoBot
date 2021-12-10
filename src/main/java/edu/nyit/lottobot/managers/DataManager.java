@@ -6,6 +6,7 @@ import com.google.firebase.FirebaseOptions;
 import com.google.firebase.database.*;
 import edu.nyit.lottobot.Main;
 import edu.nyit.lottobot.data_classes.Account;
+import edu.nyit.lottobot.data_classes.Game;
 import edu.nyit.lottobot.data_classes.RaffleLottery;
 
 import java.io.FileInputStream;
@@ -21,6 +22,7 @@ public class DataManager {
     private final FirebaseDatabase firebaseDatabase;
     private DatabaseReference accountReference;
     private DatabaseReference raffleLotteryReference;
+    private HashMap<Long, String> addingTickets;
     private Main main;
 
     public DataManager(Main main) {
@@ -29,8 +31,9 @@ public class DataManager {
         raffleLotteries = new HashMap<>();
         this.main = main;
         firebaseDatabase = FirebaseDatabase.getInstance();
-      //  updateLocalAccounts(); //Load raffles from database
-     //   updateLocalRaffles(); //Load raffles from database
+        addingTickets = new HashMap<>();
+        retrieveRaffleLotteries(); //Load raffles from database
+        retrieveAccounts();
     }
 
     //Sets up and connects to the firebase database.
@@ -78,17 +81,11 @@ public class DataManager {
      * @param channelID Channel ID in long format type
      */
     public boolean isBotChannel(long serverID, long channelID) {
-        return true; //Temp Value
-    }
-
-    /**
-     * Method to get the Channel ID of the designated bot channel
-     *
-     * @param guildID GuildID
-     * @return the bot channel ID from given guild ID, -1 if non-existent
-     */
-    public long getBotChannelID(long guildID) {
-        return 4343;
+        if(main.getJda().getTextChannelById(channelID).getName().equalsIgnoreCase("lotto-bot")){
+            return true;
+        }else{
+            return false;
+        }
     }
 
     /**
@@ -120,12 +117,19 @@ public class DataManager {
         lotteries.child(raffleLottery.getUniqueKey()).setValueAsync(raffleLottery);
     }
 
+    public void saveAllRafflesToDatabase(){
+        for(RaffleLottery raffleLottery : raffleLotteries.values()){
+            raffleLottery.stop();
+            saveRaffleToDatabase(raffleLottery);
+        }
+    }
+
     /**
      * Updates local RaffleLottery object list from database
      *
      * @return boolean value when complete
      */
-    public boolean updateLocalRaffles() {
+    public boolean retrieveRaffleLotteries() {
         this.raffleLotteryReference = firebaseDatabase.getReference("data/lotteries/raffles");
         CountDownLatch countDownLatch = new CountDownLatch(1);
         raffleLotteryReference.addValueEventListener(new ValueEventListener() {
@@ -133,6 +137,9 @@ public class DataManager {
             public void onDataChange(DataSnapshot snapshot) {
                 for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
                     boolean active = (boolean) dataSnapshot.child("active").getValue();
+                    if(!active){
+                        continue;
+                    }
                     long botChannelID = (long) dataSnapshot.child("botChannelID").getValue();
                     long guildID = (long) dataSnapshot.child("guildID").getValue();
                     long messageID = (long) dataSnapshot.child("messageID").getValue();
@@ -144,8 +151,10 @@ public class DataManager {
                     String uniqueKey = dataSnapshot.child("uniqueKey").getValue(String.class);
                     long winner = dataSnapshot.child("winner").getValue(Long.class);
                     RaffleLottery raffleLottery = new RaffleLottery(guildID, botChannelID, startedBy, prizePool, timeLeft, allowedRoles, main, false);
-                    if (!participants.isEmpty()) {
+                    if (participants != null && !participants.isEmpty()) {
                         raffleLottery.setParticipants(participants);
+                    }else{
+                        raffleLottery.setParticipants(new HashMap<>());
                     }
                     raffleLottery.setUniqueKey(uniqueKey);
                     raffleLottery.setWinner(winner);
@@ -166,25 +175,21 @@ public class DataManager {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        for(RaffleLottery raffleLottery : raffleLotteries.values()){
+            raffleLottery.start();
+        }
         return true;
     }
 
-    /**
-     * Updates local Account list from database
-     *
-     * @return boolean value upon completion
-     */
-    public boolean updateLocalAccounts() {
-        accountReference = firebaseDatabase.getReference("data").child("accounts");
+    public boolean retrieveAccounts() {
+        this.accountReference = firebaseDatabase.getReference("data/accounts/");
         CountDownLatch countDownLatch = new CountDownLatch(1);
         accountReference.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
-                    Account temp = dataSnapshot.getValue(Account.class);
-                    if (temp != null && temp.getAccountID() != -1) {
-                        accounts.put(temp.getAccountID(), temp);
-                    }
+                    Account acc = dataSnapshot.getValue(Account.class);
+                    accounts.put(acc.getAccountID(), acc);
                 }
                 countDownLatch.countDown();
             }
@@ -202,6 +207,10 @@ public class DataManager {
         return true;
     }
 
+    public void addingTicketsAdd(long l, String s){
+        addingTickets.put(l, s);
+    }
+
     /**
      * Method to get RaffleLottery from raffleID (Unique Key)
      *
@@ -211,10 +220,6 @@ public class DataManager {
      * @return RaffleLottery object, null if nonexistent
      */
     public RaffleLottery getRaffleLottery(String raffleID) {
-        if (raffleLotteries.containsKey(raffleID)) {
-            return raffleLotteries.get(raffleID);
-        }
-        updateLocalRaffles();
         return raffleLotteries.getOrDefault(raffleID, null);
     }
 
@@ -232,14 +237,16 @@ public class DataManager {
                 return raffleLottery;
             }
         }
-        updateLocalRaffles();
-        for (RaffleLottery raffleLottery : raffleLotteries.values()) {
-            if (raffleLottery.getMessageID() == messageID) {
-                return raffleLottery;
-            }
+        return null;
+    }
+
+    public Game getGame(String s){
+        if(getRaffleLottery(s) != null){
+            return getRaffleLottery(s);
         }
         return null;
     }
+
 
     /**
      * Method to retrieve the account of specific userID
@@ -253,7 +260,6 @@ public class DataManager {
         if (accounts.containsKey(userID)) {
             return accounts.get(userID);
         }
-        updateLocalAccounts();
         return accounts.getOrDefault(userID, null);
     }
 
@@ -286,5 +292,9 @@ public class DataManager {
 
     public DatabaseReference getRaffleLotteryReference() {
         return raffleLotteryReference;
+    }
+
+    public HashMap<Long, String> getAddingTickets() {
+        return addingTickets;
     }
 }
