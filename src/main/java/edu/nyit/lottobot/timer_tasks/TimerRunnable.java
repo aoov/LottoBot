@@ -22,7 +22,9 @@ public class TimerRunnable extends TimerTask {
         if (game.isActive()) {
             if (game.getTimeLeft() > 0) {
                 game.setTimeLeft(game.getTimeLeft() - 1);
-                game.print();
+                if(game.getTimeLeft() % 5 == 0){
+                    game.print();
+                }
             } else {
                 game.setActive(false);
                 game.finish();

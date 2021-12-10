@@ -9,11 +9,17 @@ import java.util.TimerTask;
  * Abstract class for games to inherit a timer easily.
  */
 public abstract class Timed {
-        private long timeLeft;
 
-        public void start(Game game){
-                Timer timer = new Timer();
+        public Timer start(Game game, Timer timer){
                 TimerTask t = new TimerRunnable(game);
                 timer.schedule(t, 0, 1000);
+                return timer;
         }
+
+        public void stop(Timer timer){
+                timer.cancel();
+        }
+
+
+
 }
