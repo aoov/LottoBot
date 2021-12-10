@@ -1,15 +1,15 @@
 package edu.nyit.lottobot.handlers;
 
 import edu.nyit.lottobot.Main;
+import edu.nyit.lottobot.data_classes.LotteryType;
 import edu.nyit.lottobot.data_classes.RaffleLottery;
+import edu.nyit.lottobot.managers.DataManager;
 import edu.nyit.lottobot.timer_tasks.SelfDestructTask;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class MessageHandlers extends ListenerAdapter {
@@ -25,17 +25,25 @@ public class MessageHandlers extends ListenerAdapter {
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
         //Determines if message is in the proper channel.
         if (main.getDataManager().isBotChannel(event.getGuild().getIdLong(), event.getChannel().getIdLong()) && !event.getAuthor().isBot()) {
-            if(event.getMessage().getContentRaw().equals("$raffle 100 10")){
-                main.getDataManager().getRaffleLotteries().put("test", new RaffleLottery(event.getGuild().getIdLong(), event.getChannel().getIdLong(), event.getAuthor().getIdLong(),100, 10, (ArrayList<Long>) null, main, false));
-                main.getDataManager().getRaffleLotteries().get("test").print();
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+            HashMap<Long,String> addingTickets = main.getDataManager().getAddingTickets();
+            if(addingTickets.containsKey(event.getAuthor().getIdLong())){
+                long amount = 0L;
+                try{
+                    amount = Long.parseLong(event.getMessage().getContentRaw());
+                }catch (NumberFormatException exception){
+                    pingSelfDestructMessage(event.getAuthor().getIdLong(), event.getChannel().getIdLong(), 5, "Incorrect format please try again.");
+                    return;
                 }
-                main.getDataManager().getRaffleLotteries().get("test").start();
+                if(main.getDataManager().getAccount(event.getAuthor().getIdLong()).getBalance() < amount){
+                    pingSelfDestructMessage(event.getAuthor().getIdLong(), event.getChannel().getIdLong(), 5, "You do not have enough tickets for this!");
+                    return;
+                }
+                if(main.getDataManager().getGame(addingTickets.get(event.getAuthor().getIdLong())).getLotteryType().equals(LotteryType.RAFFLE)){
+                    main.getDataManager().getGame(addingTickets.get(event.getAuthor().getIdLong())).addParticipant(event.getAuthor().getIdLong(), amount);
+                }
+                addingTickets.remove(event.getAuthor().getIdLong());
             }
-            super.onMessageReceived(event);
+            event.getMessage().delete().queue();
         }
     }
 
